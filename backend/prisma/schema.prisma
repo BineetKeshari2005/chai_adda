@@ -1,0 +1,142 @@
+generator client {
+  provider = "prisma-client-js"
+
+}
+
+datasource db {
+  provider = "postgresql"
+
+}
+
+enum Role {
+  STUDENT
+  ADMIN
+  STAFF
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PREPARING
+  READY
+  PICKED_UP
+  CANCELLED
+}
+
+model User {
+  id           String   @id @default(uuid())
+  name         String
+  email        String   @unique
+  collegeId    String?
+  passwordHash String
+  role         Role     @default(STUDENT)
+  createdAt    DateTime @default(now())
+
+  orders        Order[]
+  notifications Notification[]
+  favourites    Favourite[]
+  ratings       Rating[]
+}
+
+model MenuCategory {
+  id           String     @id @default(uuid())
+  name         String
+  displayOrder Int        @default(0)
+  isActive     Boolean    @default(true)
+  items        MenuItem[]
+}
+
+model MenuItem {
+  id          String   @id @default(uuid())
+  categoryId  String
+  name        String
+  description String?
+  price       Float
+  imageUrl    String?
+  isVeg       Boolean  @default(true)
+  isAvailable Boolean  @default(true)
+  avgRating   Float    @default(0)
+  createdAt   DateTime @default(now())
+
+  category   MenuCategory @relation(fields: [categoryId], references: [id])
+  orderItems OrderItem[]
+  favourites Favourite[]
+  ratings    Rating[]
+}
+
+model Order {
+  id           String      @id @default(uuid())
+  userId       String
+  status       OrderStatus @default(PENDING)
+  tokenNumber  Int
+  total        Float
+  scheduledFor DateTime?
+  createdAt    DateTime    @default(now())
+
+  user          User           @relation(fields: [userId], references: [id])
+  orderItems    OrderItem[]
+  payment       Payment?
+  notifications Notification[]
+}
+
+model OrderItem {
+  id            String  @id @default(uuid())
+  orderId       String
+  menuItemId    String
+  quantity      Int
+  customization String?
+  price         Float
+
+  order    Order    @relation(fields: [orderId], references: [id])
+  menuItem MenuItem @relation(fields: [menuItemId], references: [id])
+  ratings  Rating[]
+}
+
+model Payment {
+  id         String    @id @default(uuid())
+  orderId    String    @unique
+  amount     Float
+  upiRef     String?
+  status     String    @default("PENDING")
+  verifiedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  order Order @relation(fields: [orderId], references: [id])
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  orderId   String?
+  title     String
+  body      String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user  User   @relation(fields: [userId], references: [id])
+  order Order? @relation(fields: [orderId], references: [id])
+}
+
+model Favourite {
+  id         String @id @default(uuid())
+  userId     String
+  menuItemId String
+
+  user     User     @relation(fields: [userId], references: [id])
+  menuItem MenuItem @relation(fields: [menuItemId], references: [id])
+
+  @@unique([userId, menuItemId])
+}
+
+model Rating {
+  id          String  @id @default(uuid())
+  userId      String
+  orderItemId String
+  menuItemId  String
+  stars       Int
+  comment     String?
+
+  user      User      @relation(fields: [userId], references: [id])
+  orderItem OrderItem @relation(fields: [orderItemId], references: [id])
+  menuItem  MenuItem  @relation(fields: [menuItemId], references: [id])
+}
