@@ -28,7 +28,8 @@ model User {
   name         String
   email        String   @unique
   collegeId    String?
-  passwordHash String
+  passwordHash String?
+  googleId     String?  @unique
   role         Role     @default(STUDENT)
   createdAt    DateTime @default(now())
 
@@ -67,6 +68,8 @@ model MenuItem {
 model Order {
   id           String      @id @default(uuid())
   userId       String
+  slotId       String?
+  orderType    OrderType   @default(INSTANT)
   status       OrderStatus @default(PENDING)
   tokenNumber  Int
   total        Float
@@ -74,6 +77,7 @@ model Order {
   createdAt    DateTime    @default(now())
 
   user          User           @relation(fields: [userId], references: [id])
+  slot          TimeSlot?      @relation(fields: [slotId], references: [id])
   orderItems    OrderItem[]
   payment       Payment?
   notifications Notification[]
@@ -135,8 +139,27 @@ model Rating {
   menuItemId  String
   stars       Int
   comment     String?
+  createdAt   DateTime @default(now())
 
   user      User      @relation(fields: [userId], references: [id])
   orderItem OrderItem @relation(fields: [orderItemId], references: [id])
   menuItem  MenuItem  @relation(fields: [menuItemId], references: [id])
 }
+
+model TimeSlot {
+  id         String   @id @default(uuid())
+  label      String
+  startTime  String
+  endTime    String
+  maxOrders  Int
+  isActive   Boolean  @default(true)
+  date       DateTime?
+
+  orders Order[]
+}
+
+enum OrderType {
+  INSTANT
+  SCHEDULED
+}
+
