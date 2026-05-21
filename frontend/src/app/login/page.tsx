@@ -1,11 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import api from '@/lib/api'
 import { useAuth } from '@/context/AuthContext'
 
 export default function LoginPage() {
-  const { login } = useAuth()
+  const { login, user, isLoading } = useAuth()
+  const router = useRouter()
   const [activeTab, setActiveTab] = useState<'login' | 'signup'>('login')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -13,6 +15,17 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    if (!isLoading && user) {
+      if (user.role === 'ADMIN' || user.role === 'STAFF') {
+        router.push('/admin/orders')
+      } else {
+        router.push('/menu')
+      }
+    }
+  }, [user, isLoading, router])
+
   
 
   const handleLogin = async (e: React.FormEvent) => {

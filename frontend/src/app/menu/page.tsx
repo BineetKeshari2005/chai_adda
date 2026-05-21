@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation'
 import api from '@/lib/api'
 import { useCart } from '@/context/CartContext'
 import { useAuth } from '@/context/AuthContext'
+import ProtectedRoute from '@/components/ProtectedRoute'
+import Navbar from '@/components/Navbar'
 
 interface MenuItem {
   id: string
@@ -14,6 +16,7 @@ interface MenuItem {
   isVeg: boolean
   isAvailable: boolean
   avgRating: number
+  imageUrl: string | null
   category: { id: string; name: string }
 }
 
@@ -27,14 +30,17 @@ export default function MenuPage() {
   const [categories, setCategories] = useState<Category[]>([])
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [search, setSearch] = useState('')
+  const [dietaryFilter, setDietaryFilter] = useState<'all' | 'veg' | 'non-veg'>('all')
   const [loading, setLoading] = useState(true)
   const { items, addItem, updateQuantity, total, itemCount } = useCart()
-  const { user, logout } = useAuth()
+  const { user } = useAuth()
   const router = useRouter()
 
   useEffect(() => {
-    fetchData()
-  }, [])
+    if (user && user.role === 'STUDENT') {
+      fetchData()
+    }
+  }, [user])
 
   const fetchData = async () => {
     try {
@@ -52,216 +58,210 @@ export default function MenuPage() {
   }
 
   const filteredItems = menuItems.filter(item => {
-    const matchesCategory = selectedCategory === 'all' ||
-      item.category.id === selectedCategory
+    const matchesCategory = selectedCategory === 'all' || item.category.id === selectedCategory
     const matchesSearch = item.name.toLowerCase().includes(search.toLowerCase())
-    return matchesCategory && matchesSearch && item.isAvailable
+    const matchesDietary = dietaryFilter === 'all' || 
+      (dietaryFilter === 'veg' && item.isVeg) || 
+      (dietaryFilter === 'non-veg' && !item.isVeg)
+    
+    // We display all items even if unavailable, so they show as Sold Out
+    return matchesCategory && matchesSearch && matchesDietary
   })
 
   const getItemQuantity = (id: string) => {
     return items.find(i => i.id === id)?.quantity || 0
   }
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-stone-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-5xl mb-4 animate-bounce">☕</div>
-          <p className="text-amber-800 font-medium">Loading menu...</p>
-        </div>
-      </div>
-    )
-  }
-
   return (
-    <div className="min-h-screen bg-stone-50 pb-32">
+    <ProtectedRoute allowedRoles={['STUDENT']}>
+      <div className="min-h-screen bg-stone-50 pb-32">
+        <Navbar />
 
-      {/* Header */}
-      <div className="bg-white border-b border-gray-100 sticky top-0 z-40">
-        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
-          <h1 className="text-xl font-bold text-amber-900">Chai Adda</h1>
-          <nav className="hidden md:flex items-center gap-6">
-            <button className="text-sm font-medium text-amber-800 border-b-2 border-amber-800 pb-0.5">
-              Menu
-            </button>
-            <button
-              onClick={() => router.push('/orders')}
-              className="text-sm text-gray-500 hover:text-amber-800"
-            >
-              Orders
-            </button>
-          </nav>
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => router.push('/notifications')}
-              className="relative p-2 hover:bg-amber-50 rounded-full"
-            >
-              <span className="text-xl">🔔</span>
-            </button>
-            <button
-              onClick={logout}
-              className="w-9 h-9 bg-amber-800 rounded-full flex items-center justify-center text-white font-semibold text-sm"
-            >
-              {user?.name?.charAt(0).toUpperCase()}
-            </button>
+        <div className="max-w-7xl mx-auto px-4 pt-4">
+
+          {/* Search Bar */}
+          <div className="relative mb-6">
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">🔍</span>
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search for Masala Chai, Samosa..."
+              className="w-full bg-white border border-stone-200 rounded-2xl pl-12 pr-12 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400/50 shadow-sm transition-all"
+            />
+            {search && (
+              <button 
+                onClick={() => setSearch('')}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 bg-stone-100 rounded-full w-6 h-6 flex items-center justify-center text-xs transition-colors"
+              >
+                ✕
+              </button>
+            )}
           </div>
-        </div>
-      </div>
 
-      <div className="max-w-5xl mx-auto px-4 pt-4">
+          {/* Filters: Dietary & Categories */}
+          <div className="flex flex-col gap-3 mb-6">
+            
+            {/* Dietary Filter Pills */}
+            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+              <button
+                onClick={() => setDietaryFilter('all')}
+                className={`flex-shrink-0 px-4 py-2 rounded-full text-xs font-semibold transition-all duration-300 ${
+                  dietaryFilter === 'all'
+                    ? 'bg-stone-800 text-white shadow-md'
+                    : 'bg-white text-stone-600 border border-stone-200 hover:bg-stone-50'
+                }`}
+              >
+                All
+              </button>
+              <button
+                onClick={() => setDietaryFilter('veg')}
+                className={`flex-shrink-0 px-4 py-2 rounded-full text-xs font-semibold flex items-center gap-1.5 transition-all duration-300 ${
+                  dietaryFilter === 'veg'
+                    ? 'bg-green-600 text-white shadow-md'
+                    : 'bg-white text-stone-600 border border-stone-200 hover:bg-green-50'
+                }`}
+              >
+                <span>🟢</span> Veg
+              </button>
+              <button
+                onClick={() => setDietaryFilter('non-veg')}
+                className={`flex-shrink-0 px-4 py-2 rounded-full text-xs font-semibold flex items-center gap-1.5 transition-all duration-300 ${
+                  dietaryFilter === 'non-veg'
+                    ? 'bg-red-600 text-white shadow-md'
+                    : 'bg-white text-stone-600 border border-stone-200 hover:bg-red-50'
+                }`}
+              >
+                <span>🔴</span> Non-Veg
+              </button>
+            </div>
 
-        {/* Search */}
-        <div className="relative mb-4">
-          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">🔍</span>
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search for Masala Chai, Samosa..."
-            className="w-full bg-white border border-gray-200 rounded-xl pl-11 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 shadow-sm"
-          />
-        </div>
-
-        {/* Category filters — only categories */}
-        <div className="flex gap-2 overflow-x-auto pb-2 mb-5 scrollbar-hide">
-          <button
-            onClick={() => setSelectedCategory('all')}
-            className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition ${
-              selectedCategory === 'all'
-                ? 'bg-amber-800 text-white'
-                : 'bg-white text-gray-600 border border-gray-200'
-            }`}
-          >
-            All Items
-          </button>
-          {categories.map(cat => (
-            <button
-              key={cat.id}
-              onClick={() => setSelectedCategory(cat.id)}
-              className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition ${
-                selectedCategory === cat.id
-                  ? 'bg-amber-800 text-white'
-                  : 'bg-white text-gray-600 border border-gray-200'
-              }`}
-            >
-              {cat.name}
-            </button>
-          ))}
-        </div>
-
-        {/* Hero banner */}
-        <div className="relative rounded-2xl overflow-hidden h-48 mb-6">
-          <img
-            src="/chai-adda-bg.png"
-            alt="Featured"
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"/>
-          <div className="absolute bottom-4 left-4">
-            <span className="bg-amber-500 text-white text-xs px-2 py-1 rounded-full font-medium">
-              STUDENT FAVORITE
-            </span>
-            <h2 className="text-white text-xl font-bold mt-1">Signature Masala Chai</h2>
-            <p className="text-white/80 text-sm">Hand-pounded spices & farm fresh milk</p>
+            {/* Category Filter Pills (Glassmorphic Slider) */}
+            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+              <button
+                onClick={() => setSelectedCategory('all')}
+                className={`flex-shrink-0 px-4 py-2 rounded-xl text-sm font-medium backdrop-blur-md transition-all duration-300 ${
+                  selectedCategory === 'all'
+                    ? 'bg-amber-800/90 text-white shadow-lg border border-amber-800/20'
+                    : 'bg-white/80 text-stone-600 border border-white hover:bg-white shadow-sm'
+                }`}
+              >
+                All Items
+              </button>
+              {categories.map(cat => (
+                <button
+                  key={cat.id}
+                  onClick={() => setSelectedCategory(cat.id)}
+                  className={`flex-shrink-0 px-4 py-2 rounded-xl text-sm font-medium backdrop-blur-md transition-all duration-300 ${
+                    selectedCategory === cat.id
+                      ? 'bg-amber-800/90 text-white shadow-lg border border-amber-800/20'
+                      : 'bg-white/80 text-stone-600 border border-white hover:bg-white shadow-sm'
+                  }`}
+                >
+                  {cat.name}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
 
-        {/* Menu items */}
-        {selectedCategory === 'all' ? (
-          categories.map(category => {
-            const categoryItems = filteredItems.filter(
-              item => item.category.id === category.id
-            )
-            if (categoryItems.length === 0) return null
-            return (
-              <div key={category.id} className="mb-8">
-                <div className="flex items-center justify-between mb-3">
-                  <div>
-                    <h3 className="text-base font-semibold text-amber-900">
-                      {category.name}
-                    </h3>
-                    <p className="text-xs text-gray-400">
-                      {category.name === 'Chai & Coffee' ? 'The soul of Chai Adda' :
-                       category.name === 'Snacks' ? 'Crunchy & delicious' :
-                       category.name === 'Meals' ? 'Full and satisfying' :
-                       'Refreshing drinks'}
-                    </p>
+          {/* Hero banner */}
+          <div className="relative rounded-3xl overflow-hidden h-48 mb-8 shadow-sm group">
+            <img
+              src="/chai-adda-bg.png"
+              alt="Featured"
+              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent"/>
+            <div className="absolute bottom-5 left-5">
+              <span className="bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[10px] uppercase tracking-wider px-2.5 py-1 rounded-full font-bold shadow-md">
+                STUDENT FAVORITE
+              </span>
+              <h2 className="text-white text-2xl font-bold mt-2">Signature Masala Chai</h2>
+              <p className="text-white/80 text-sm mt-0.5">Hand-pounded spices & farm fresh milk</p>
+            </div>
+          </div>
+
+          {/* Main Content Area */}
+          {loading ? (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 animate-pulse">
+              {[...Array(8)].map((_, i) => (
+                <div key={i} className="bg-white rounded-2xl overflow-hidden shadow-sm border border-stone-100">
+                  <div className="h-32 bg-stone-200"></div>
+                  <div className="p-3">
+                    <div className="h-4 bg-stone-200 rounded w-3/4 mb-2"></div>
+                    <div className="h-3 bg-stone-100 rounded w-full mb-1"></div>
+                    <div className="h-3 bg-stone-100 rounded w-2/3 mb-4"></div>
+                    <div className="flex justify-between items-center">
+                      <div className="h-4 bg-stone-200 rounded w-1/4"></div>
+                      <div className="h-8 bg-stone-200 rounded w-8"></div>
+                    </div>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  {categoryItems.map(item => (
-                    <MenuItemCard
-                      key={item.id}
-                      item={item}
-                      quantity={getItemQuantity(item.id)}
-                      onAdd={() => addItem({
-                        id: item.id,
-                        name: item.name,
-                        price: item.price,
-                        quantity: 1,
-                        isVeg: item.isVeg
-                      })}
-                      onIncrement={() => updateQuantity(
-                        item.id, getItemQuantity(item.id) + 1
-                      )}
-                      onDecrement={() => updateQuantity(
-                        item.id, getItemQuantity(item.id) - 1
-                      )}
-                    />
-                  ))}
+              ))}
+            </div>
+          ) : filteredItems.length === 0 ? (
+            <div className="text-center py-16">
+              <div className="text-6xl mb-4">🔍</div>
+              <h3 className="text-lg font-bold text-stone-800">No items found</h3>
+              <p className="text-stone-500 text-sm mt-1">Try adjusting your filters or search term.</p>
+              <button 
+                onClick={() => { setSearch(''); setDietaryFilter('all'); setSelectedCategory('all') }}
+                className="mt-4 text-amber-600 font-medium text-sm hover:text-amber-800 transition-colors"
+              >
+                Clear all filters
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+              {filteredItems.map(item => (
+                <MenuItemCard
+                  key={item.id}
+                  item={item}
+                  quantity={getItemQuantity(item.id)}
+                  onAdd={() => addItem({
+                    id: item.id,
+                    name: item.name,
+                    price: item.price,
+                    quantity: 1,
+                    isVeg: item.isVeg
+                  })}
+                  onIncrement={() => updateQuantity(
+                    item.id, getItemQuantity(item.id) + 1
+                  )}
+                  onDecrement={() => updateQuantity(
+                    item.id, getItemQuantity(item.id) - 1
+                  )}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Floating cart bar */}
+        {itemCount > 0 && (
+          <div className="fixed bottom-6 left-0 right-0 px-4 z-50 animate-in slide-in-from-bottom-8 duration-300">
+            <div className="max-w-7xl mx-auto">
+              <button
+                onClick={() => router.push('/cart')}
+                className="w-full bg-amber-900 text-white rounded-2xl py-4 px-6 flex items-center justify-between shadow-2xl hover:bg-amber-950 transition-colors border border-amber-800"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="bg-amber-800 rounded-xl px-2.5 py-1 text-sm font-bold shadow-inner">
+                    {itemCount}
+                  </div>
+                  <span className="font-medium text-amber-50">Items added</span>
                 </div>
-              </div>
-            )
-          })
-        ) : (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {filteredItems.map(item => (
-              <MenuItemCard
-                key={item.id}
-                item={item}
-                quantity={getItemQuantity(item.id)}
-                onAdd={() => addItem({
-                  id: item.id,
-                  name: item.name,
-                  price: item.price,
-                  quantity: 1,
-                  isVeg: item.isVeg
-                })}
-                onIncrement={() => updateQuantity(
-                  item.id, getItemQuantity(item.id) + 1
-                )}
-                onDecrement={() => updateQuantity(
-                  item.id, getItemQuantity(item.id) - 1
-                )}
-              />
-            ))}
+                <div className="flex items-center gap-3">
+                  <span className="font-bold text-lg">₹{total.toFixed(2)}</span>
+                  <span className="text-amber-500">|</span>
+                  <span className="font-bold text-sm tracking-wide text-amber-200">VIEW CART →</span>
+                </div>
+              </button>
+            </div>
           </div>
         )}
       </div>
-
-      {/* Floating cart bar */}
-      {itemCount > 0 && (
-        <div className="fixed bottom-6 left-0 right-0 px-4 z-50">
-          <div className="max-w-5xl mx-auto">
-            <button
-              onClick={() => router.push('/cart')}
-              className="w-full bg-amber-800 text-white rounded-2xl py-4 px-6 flex items-center justify-between shadow-xl"
-            >
-              <div className="flex items-center gap-3">
-                <div className="bg-amber-700 rounded-xl px-2 py-1 text-sm font-bold">
-                  {itemCount}
-                </div>
-                <span className="font-medium">Items added</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="font-bold">₹{total.toFixed(2)}</span>
-                <span className="font-semibold">VIEW CART →</span>
-              </div>
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
+    </ProtectedRoute>
   )
 }
 
@@ -293,56 +293,85 @@ function MenuItemCard({ item, quantity, onAdd, onIncrement, onDecrement }: {
   }
 
   return (
-    <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100">
-      <div className={`relative h-32 flex items-center justify-center text-5xl ${
-        item.isVeg ? 'bg-green-50' : 'bg-orange-50'
+    <div className={`relative bg-white rounded-2xl overflow-hidden border border-stone-100 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 hover:border-amber-200 group ${
+      !item.isAvailable ? 'opacity-70 grayscale-[0.8]' : ''
+    }`}>
+      
+      {/* Image / Fallback Container */}
+      <div className={`relative h-32 flex items-center justify-center text-5xl overflow-hidden ${
+        item.imageUrl ? '' : (item.isVeg ? 'bg-gradient-to-br from-green-50 to-green-100' : 'bg-gradient-to-br from-orange-50 to-orange-100')
       }`}>
-        <span>{foodEmoji[item.name] || (item.isVeg ? '🥗' : '🍳')}</span>
-        <div className="absolute top-2 left-2">
-          <div className={`w-4 h-4 border-2 rounded-sm flex items-center justify-center ${
+        {item.imageUrl ? (
+          <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+        ) : (
+          <span className="transition-transform duration-300 group-hover:scale-110">
+            {foodEmoji[item.name] || (item.isVeg ? '🥗' : '🍳')}
+          </span>
+        )}
+
+        {/* Veg/Non-veg Indicator */}
+        <div className="absolute top-2.5 left-2.5 bg-white/90 backdrop-blur-sm p-1 rounded shadow-sm">
+          <div className={`w-3.5 h-3.5 border-[1.5px] rounded-sm flex items-center justify-center ${
             item.isVeg ? 'border-green-600' : 'border-red-600'
           }`}>
-            <div className={`w-2 h-2 rounded-full ${
+            <div className={`w-1.5 h-1.5 rounded-full ${
               item.isVeg ? 'bg-green-600' : 'bg-red-600'
             }`}/>
           </div>
         </div>
-      </div>
-      <div className="p-3">
-        <h4 className="font-semibold text-gray-900 text-sm leading-tight">
-          {item.name}
-        </h4>
-        <p className="text-xs text-gray-400 mt-0.5 leading-tight line-clamp-1">
-          {item.description}
-        </p>
-        {item.avgRating > 0 && (
-          <div className="flex items-center gap-1 mt-1">
-            <span className="text-xs text-amber-500">★</span>
-            <span className="text-xs text-gray-500">{item.avgRating.toFixed(1)}</span>
+        
+        {/* Sold Out Overlay */}
+        {!item.isAvailable && (
+          <div className="absolute inset-0 bg-stone-900/40 backdrop-blur-[2px] flex items-center justify-center">
+            <span className="bg-red-600 text-white text-[10px] uppercase font-bold tracking-widest px-3 py-1.5 rounded-full shadow-lg transform -rotate-12">
+              Sold Out
+            </span>
           </div>
         )}
-        <div className="flex items-center justify-between mt-2">
-          <span className="font-bold text-gray-900 text-sm">₹{item.price}</span>
+      </div>
+
+      <div className="p-3.5">
+        <h4 className="font-bold text-stone-800 text-sm leading-tight group-hover:text-amber-700 transition-colors">
+          {item.name}
+        </h4>
+        <p className="text-[11px] text-stone-500 mt-1 leading-relaxed line-clamp-2 min-h-[32px]">
+          {item.description}
+        </p>
+        
+        {item.avgRating > 0 && (
+          <div className="flex items-center gap-1 mt-1.5">
+            <span className="text-[10px] text-amber-500">★</span>
+            <span className="text-[10px] font-medium text-stone-600">{item.avgRating.toFixed(1)}</span>
+          </div>
+        )}
+        
+        <div className="flex items-center justify-between mt-3 pt-2 border-t border-stone-50">
+          <span className="font-extrabold text-stone-900 text-sm">₹{item.price}</span>
+          
           {quantity === 0 ? (
             <button
               onClick={onAdd}
               disabled={!item.isAvailable}
-              className="w-8 h-8 bg-amber-800 text-white rounded-lg flex items-center justify-center font-bold text-lg shadow-sm disabled:opacity-40"
+              className={`w-8 h-8 rounded-xl flex items-center justify-center font-bold text-lg shadow-sm transition-all ${
+                !item.isAvailable 
+                  ? 'bg-stone-200 text-stone-400 cursor-not-allowed'
+                  : 'bg-amber-100 text-amber-800 hover:bg-amber-800 hover:text-white active:scale-95'
+              }`}
             >
               +
             </button>
           ) : (
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 bg-stone-50 rounded-xl p-0.5 border border-stone-200">
               <button
                 onClick={onDecrement}
-                className="w-7 h-7 bg-amber-100 text-amber-800 rounded-lg flex items-center justify-center font-bold"
+                className="w-7 h-7 bg-white text-stone-600 hover:text-red-600 rounded-lg flex items-center justify-center font-bold shadow-sm transition-colors"
               >
                 -
               </button>
-              <span className="text-sm font-semibold w-4 text-center">{quantity}</span>
+              <span className="text-xs font-bold w-5 text-center text-stone-800">{quantity}</span>
               <button
                 onClick={onIncrement}
-                className="w-7 h-7 bg-amber-800 text-white rounded-lg flex items-center justify-center font-bold"
+                className="w-7 h-7 bg-amber-800 text-white hover:bg-amber-900 rounded-lg flex items-center justify-center font-bold shadow-sm transition-colors"
               >
                 +
               </button>

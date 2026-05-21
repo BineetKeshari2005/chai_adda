@@ -1,11 +1,25 @@
 import { Request, Response } from 'express'
 import prisma from '../lib/prisma'
 
-// GET /api/menu - anyone can see menu
+// GET /api/menu - anyone can see menu (only available items)
 export const getMenuItems = async (req: Request, res: Response) => {
   try {
     const items = await prisma.menuItem.findMany({
       where: { isAvailable: true },
+      include: { category: true },
+      orderBy: { createdAt: 'desc' }
+    })
+
+    return res.status(200).json({ items })
+  } catch (error) {
+    return res.status(500).json({ error: 'Something went wrong' })
+  }
+}
+
+// GET /api/admin/menu - admin sees ALL items including unavailable
+export const getAllMenuItems = async (req: Request, res: Response) => {
+  try {
+    const items = await prisma.menuItem.findMany({
       include: { category: true },
       orderBy: { createdAt: 'desc' }
     })

@@ -1,5 +1,6 @@
 import { Request, Response } from 'express'
 import prisma from '../lib/prisma'
+import { getIO } from '../lib/socket'
 
 // helper function — generates next token number for today
 const generateTokenNumber = async (): Promise<number> => {
@@ -144,6 +145,15 @@ export const placeOrder = async (req: Request, res: Response) => {
       tokenNumber,
       waitTime
     })
+    
+    // Emit new order to admins
+    try {
+      getIO().to('admin').emit('newOrder', order)
+    } catch (e) {
+      console.log('Socket emit error (newOrder):', e)
+    }
+    
+    return res
   } catch (error) {
     console.log('PLACE ORDER ERROR:', error)
     return res.status(500).json({ error: 'Something went wrong' })
@@ -276,6 +286,15 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
           read: false
         }
       })
+    }
+
+    // Emit order status update to user and admin
+    try {
+      const io = getIO()
+      io.to(`user_${order.userId}`).emit('orderStatusUpdated', order)
+      io.to('admin').emit('orderStatusUpdated', order)
+    } catch (e) {
+      console.log('Socket emit error (orderStatusUpdated):', e)
     }
 
     return res.status(200).json({

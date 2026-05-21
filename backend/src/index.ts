@@ -52,6 +52,12 @@ app.use('/api/slots', slotRoutes)
 app.use('/api/admin/slots', adminSlotRoutes)
 app.use('/api/ratings', ratingRoutes)
 app.use('/api/notifications', notificationRoutes)
-app.listen(PORT, () => {
+import http from 'http'
+import { initSocket } from './lib/socket'
+
+const server = http.createServer(app)
+initSocket(server)
+
+server.listen(PORT, () => {
   console.log(`Chai Adda API running on http://localhost:${PORT}`)
 })

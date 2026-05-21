@@ -2,6 +2,7 @@ import { Router } from 'express'
 import {
   getMenuItems,
   getMenuItem,
+  getAllMenuItems,
   createMenuItem,
   updateMenuItem,
   toggleAvailability,
@@ -17,6 +18,7 @@ router.get('/', getMenuItems)
 router.get('/:id', getMenuItem)
 
 // admin only routes
+router.get('/admin/all', protect, adminOnly, getAllMenuItems)
 router.post('/', protect, adminOnly, createMenuItem)
 router.put('/:id', protect, adminOnly, updateMenuItem)
 router.patch('/:id/toggle', protect, adminOnly, toggleAvailability)
