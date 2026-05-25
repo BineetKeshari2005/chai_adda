@@ -3,6 +3,8 @@ import cors from 'cors'
 import helmet from 'helmet'
 import morgan from 'morgan'
 import dotenv from 'dotenv'
+dotenv.config()
+
 import authRoutes from './routes/auth.routes'
 import categoryRoutes from './routes/category.routes'
 import menuRoutes from './routes/menu.routes'
@@ -14,8 +16,7 @@ import adminSlotRoutes from './routes/admin.slot.routes'
 import ratingRoutes from './routes/rating.routes'
 import notificationRoutes from './routes/notification.routes'
 import googleAuthRoutes from './routes/google.auth.routes'
-
-dotenv.config()
+import uploadRoutes from './routes/upload.routes'
 
 const app = express()
 const PORT = process.env.PORT || 4000
@@ -52,6 +53,7 @@ app.use('/api/slots', slotRoutes)
 app.use('/api/admin/slots', adminSlotRoutes)
 app.use('/api/ratings', ratingRoutes)
 app.use('/api/notifications', notificationRoutes)
+app.use('/api/upload', uploadRoutes)
 import http from 'http'
 import { initSocket } from './lib/socket'
 

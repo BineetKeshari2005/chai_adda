@@ -82,7 +82,7 @@ function OrderConfirmationContent() {
 
           <div className="mt-8 space-y-3">
             <button
-              onClick={() => router.push('/dashboard')} // Will build in Phase 7
+              onClick={() => router.push('/orders')}
               className="w-full bg-stone-900 hover:bg-black text-white py-4 rounded-xl font-bold transition-colors"
             >
               Track Order Status

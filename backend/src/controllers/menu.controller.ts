@@ -53,7 +53,7 @@ export const getMenuItem = async (req: Request, res: Response) => {
 // POST /api/admin/menu - admin adds new item
 export const createMenuItem = async (req: Request, res: Response) => {
   try {
-    const { name, description, price, categoryId, imageUrl, isVeg } = req.body
+    const { name, description, price, categoryId, imageUrl, isVeg, isFeatured } = req.body
 
     if (!name || !price || !categoryId) {
       return res.status(400).json({ error: 'Name, price and category are required' })
@@ -66,7 +66,8 @@ export const createMenuItem = async (req: Request, res: Response) => {
         price: parseFloat(price),
         categoryId,
         imageUrl,
-        isVeg: isVeg ?? true
+        isVeg: isVeg ?? true,
+        isFeatured: isFeatured ?? false
       },
       include: { category: true }
     })
@@ -82,7 +83,7 @@ export const createMenuItem = async (req: Request, res: Response) => {
 export const updateMenuItem = async (req: Request, res: Response) => {
   try {
     const id = req.params.id as string
-    const { name, description, price, categoryId, imageUrl, isVeg } = req.body
+    const { name, description, price, categoryId, imageUrl, isVeg, isFeatured } = req.body
 
     const item = await prisma.menuItem.update({
       where: { id },
@@ -92,7 +93,8 @@ export const updateMenuItem = async (req: Request, res: Response) => {
         price: price ? parseFloat(price) : undefined,
         categoryId,
         imageUrl,
-        isVeg
+        isVeg,
+        isFeatured
       },
       include: { category: true }
     })

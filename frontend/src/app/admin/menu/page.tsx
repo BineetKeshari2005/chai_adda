@@ -23,6 +23,7 @@ interface MenuItem {
   imageUrl: string
   isAvailable: boolean
   isVeg: boolean
+  isFeatured: boolean
   categoryId: string
   category: Category
 }
@@ -49,9 +50,41 @@ export default function AdminMenuPage() {
     price: '',
     categoryId: '',
     imageUrl: '',
-    isVeg: true
+    isVeg: true,
+    isFeatured: false
   })
   const [formSubmitting, setFormSubmitting] = useState(false)
+  const [isUploading, setIsUploading] = useState(false)
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setIsUploading(true)
+    const uploadData = new FormData()
+    uploadData.append('image', file)
+
+    try {
+      const token = localStorage.getItem('token')
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/upload`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: uploadData
+      })
+      const data = await res.json()
+      if (res.ok && data.url) {
+        setFormData(prev => ({ ...prev, imageUrl: data.url }))
+      } else {
+        alert(data.error || 'Upload failed')
+      }
+    } catch (err) {
+      alert('Error uploading file')
+    } finally {
+      setIsUploading(false)
+    }
+  }
 
   useEffect(() => {
     if (!isLoading) {
@@ -99,7 +132,8 @@ export default function AdminMenuPage() {
         price: item.price.toString(),
         categoryId: item.categoryId,
         imageUrl: item.imageUrl || '',
-        isVeg: item.isVeg
+        isVeg: item.isVeg,
+        isFeatured: item.isFeatured
       })
     } else {
       setEditingItem(null)
@@ -109,7 +143,8 @@ export default function AdminMenuPage() {
         price: '',
         categoryId: categories.length > 0 ? categories[0].id : '',
         imageUrl: '',
-        isVeg: true
+        isVeg: true,
+        isFeatured: false
       })
     }
     setIsModalOpen(true)
@@ -379,7 +414,7 @@ export default function AdminMenuPage() {
                       className="w-full bg-stone-50 border border-stone-200 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500 font-medium appearance-none"
                     >
                       <option value="" disabled>Select category</option>
-                      {categories.map(cat => (
+                      {Array.from(new Map(categories.map(c => [c.name, c])).values()).map(cat => (
                         <option key={cat.id} value={cat.id}>{cat.name}</option>
                       ))}
                     </select>
@@ -388,13 +423,19 @@ export default function AdminMenuPage() {
 
                 <div>
                   <label className="block text-sm font-bold text-stone-700 mb-1.5">Image URL (Optional)</label>
-                  <input 
-                    type="url"
-                    value={formData.imageUrl}
-                    onChange={e => setFormData({...formData, imageUrl: e.target.value})}
-                    className="w-full bg-stone-50 border border-stone-200 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500 font-medium text-sm text-stone-600"
-                    placeholder="https://example.com/image.jpg"
-                  />
+                  <div className="flex gap-2">
+                    <input 
+                      type="url"
+                      value={formData.imageUrl}
+                      onChange={e => setFormData({...formData, imageUrl: e.target.value})}
+                      className="flex-1 bg-stone-50 border border-stone-200 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500 font-medium text-sm text-stone-600"
+                      placeholder="https://example.com/image.jpg"
+                    />
+                    <label className="bg-stone-200 hover:bg-stone-300 text-stone-700 px-4 py-3 rounded-xl cursor-pointer transition-colors flex items-center justify-center min-w-[100px] font-bold text-sm">
+                      {isUploading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Upload'}
+                      <input type="file" accept="image/*" className="hidden" onChange={handleFileUpload} disabled={isUploading} />
+                    </label>
+                  </div>
                 </div>
 
                 <div>
@@ -408,11 +449,20 @@ export default function AdminMenuPage() {
                   />
                 </div>
 
-                <div className="flex items-center gap-3 bg-stone-50 p-4 rounded-xl border border-stone-200 cursor-pointer" onClick={() => setFormData({...formData, isVeg: !formData.isVeg})}>
-                  <div className={`w-5 h-5 rounded-md border flex items-center justify-center transition-colors ${formData.isVeg ? 'bg-green-500 border-green-600 text-white' : 'bg-white border-stone-300'}`}>
-                    {formData.isVeg && <CheckCircle2 className="w-4 h-4" />}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="flex items-center gap-3 bg-stone-50 p-4 rounded-xl border border-stone-200 cursor-pointer hover:bg-stone-100 transition-colors" onClick={() => setFormData({...formData, isVeg: !formData.isVeg})}>
+                    <div className={`w-5 h-5 rounded-md border flex items-center justify-center transition-colors ${formData.isVeg ? 'bg-green-500 border-green-600 text-white' : 'bg-white border-stone-300'}`}>
+                      {formData.isVeg && <CheckCircle2 className="w-4 h-4" />}
+                    </div>
+                    <span className="text-sm font-bold text-stone-700 select-none">Vegetarian</span>
                   </div>
-                  <span className="text-sm font-bold text-stone-700 select-none">This is a Vegetarian Item</span>
+                  
+                  <div className="flex items-center gap-3 bg-stone-50 p-4 rounded-xl border border-stone-200 cursor-pointer hover:bg-stone-100 transition-colors" onClick={() => setFormData({...formData, isFeatured: !formData.isFeatured})}>
+                    <div className={`w-5 h-5 rounded-md border flex items-center justify-center transition-colors ${formData.isFeatured ? 'bg-amber-500 border-amber-600 text-white' : 'bg-white border-stone-300'}`}>
+                      {formData.isFeatured && <CheckCircle2 className="w-4 h-4" />}
+                    </div>
+                    <span className="text-sm font-bold text-stone-700 select-none">Featured (Hero Banner)</span>
+                  </div>
                 </div>
               </div>
 

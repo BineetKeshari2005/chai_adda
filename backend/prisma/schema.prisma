@@ -56,6 +56,7 @@ model MenuItem {
   imageUrl    String?
   isVeg       Boolean  @default(true)
   isAvailable Boolean  @default(true)
+  isFeatured  Boolean  @default(false)
   avgRating   Float    @default(0)
   createdAt   DateTime @default(now())
 
@@ -92,7 +93,7 @@ model OrderItem {
   price         Float
 
   order    Order    @relation(fields: [orderId], references: [id])
-  menuItem MenuItem @relation(fields: [menuItemId], references: [id])
+  menuItem MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
   ratings  Rating[]
 }
 
@@ -127,7 +128,7 @@ model Favourite {
   menuItemId String
 
   user     User     @relation(fields: [userId], references: [id])
-  menuItem MenuItem @relation(fields: [menuItemId], references: [id])
+  menuItem MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
 
   @@unique([userId, menuItemId])
 }
@@ -143,7 +144,7 @@ model Rating {
 
   user      User      @relation(fields: [userId], references: [id])
   orderItem OrderItem @relation(fields: [orderItemId], references: [id])
-  menuItem  MenuItem  @relation(fields: [menuItemId], references: [id])
+  menuItem  MenuItem  @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
 }
 
 model TimeSlot {

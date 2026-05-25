@@ -32,6 +32,7 @@ export default function CheckoutPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [isOrderComplete, setIsOrderComplete] = useState(false)
   
   const [orderType, setOrderType] = useState<'INSTANT' | 'SCHEDULED'>('INSTANT')
   const [slots, setSlots] = useState<TimeSlot[]>([])
@@ -42,10 +43,10 @@ export default function CheckoutPage() {
   const grandTotal = total + gst
 
   useEffect(() => {
-    if (items.length === 0) {
+    if (!isOrderComplete && items.length === 0) {
       router.push('/cart')
     }
-  }, [items, router])
+  }, [items, router, isOrderComplete])
 
   // Fetch slots
   useEffect(() => {
@@ -117,6 +118,7 @@ export default function CheckoutPage() {
             })
 
             if (verifyData.success) {
+              setIsOrderComplete(true)
               clearCart()
               router.push(`/order-confirmation?token=${verifyData.tokenNumber}&orderId=${verifyData.orderId}`)
             }
