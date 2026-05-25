@@ -20,6 +20,7 @@ const generateTokenNumber = async (): Promise<number> => {
     orderBy: { tokenNumber: 'desc' }
   })
 
+  // Start with 1, then 2, 3... resets after midnight since we filter by today's date
   return lastOrder ? lastOrder.tokenNumber + 1 : 1
 }
 
@@ -154,9 +155,9 @@ export const placeOrder = async (req: Request, res: Response) => {
     }
     
     return res
-  } catch (error) {
+  } catch (error: any) {
     console.log('PLACE ORDER ERROR:', error)
-    return res.status(500).json({ error: 'Something went wrong' })
+    return res.status(500).json({ error: error.message || 'Something went wrong in placeOrder' })
   }
 }
 

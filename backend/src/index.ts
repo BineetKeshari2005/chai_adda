@@ -17,6 +17,7 @@ import ratingRoutes from './routes/rating.routes'
 import notificationRoutes from './routes/notification.routes'
 import googleAuthRoutes from './routes/google.auth.routes'
 import uploadRoutes from './routes/upload.routes'
+import userRoutes from './routes/user.routes'
 
 const app = express()
 const PORT = process.env.PORT || 4000
@@ -54,6 +55,7 @@ app.use('/api/admin/slots', adminSlotRoutes)
 app.use('/api/ratings', ratingRoutes)
 app.use('/api/notifications', notificationRoutes)
 app.use('/api/upload', uploadRoutes)
+app.use('/api/users', userRoutes)
 import http from 'http'
 import { initSocket } from './lib/socket'
 

@@ -28,6 +28,8 @@ model User {
   name         String
   email        String   @unique
   collegeId    String?
+  phone        String?
+  address      String?
   passwordHash String?
   googleId     String?  @unique
   role         Role     @default(STUDENT)

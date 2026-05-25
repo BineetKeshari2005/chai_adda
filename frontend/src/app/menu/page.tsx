@@ -7,6 +7,7 @@ import { useCart } from '@/context/CartContext'
 import { useAuth } from '@/context/AuthContext'
 import ProtectedRoute from '@/components/ProtectedRoute'
 import Navbar from '@/components/Navbar'
+import { Coffee, ClipboardList, Bell, ShoppingCart, LogOut, Menu, X, User as UserIcon, Search, Utensils, CupSoda, Croissant, Egg, Soup, Pizza, Droplets, UtensilsCrossed } from 'lucide-react'
 
 interface MenuItem {
   id: string
@@ -111,7 +112,7 @@ export default function MenuPage() {
       <div className="min-h-screen bg-[#fcfbf9] pb-32">
         <Navbar />
 
-        <div className="max-w-7xl mx-auto px-4 lg:px-8 pt-6">
+        <div className="w-full px-4 lg:px-8 pt-6">
 
           {/* Search Bar */}
           <div className="relative mb-6">
@@ -266,7 +267,9 @@ export default function MenuPage() {
             </div>
           ) : filteredItems.length === 0 ? (
             <div className="text-center py-16">
-              <div className="text-6xl mb-4">🔍</div>
+              <div className="flex justify-center mb-4 text-stone-300">
+                <Search className="w-16 h-16" />
+              </div>
               <h3 className="text-lg font-bold text-stone-800">No items found</h3>
               <p className="text-stone-500 text-sm mt-1">Try adjusting your filters or search term.</p>
               <button 
@@ -369,24 +372,17 @@ function MenuItemCard({ item, quantity, onAdd, onIncrement, onDecrement }: {
   onIncrement: () => void
   onDecrement: () => void
 }) {
-  const foodEmoji: Record<string, string> = {
-    'Masala Chai': '☕',
-    'Adrak Chai': '🍵',
-    'Elaichi Chai': '🫖',
-    'Cold Coffee': '🧋',
-    'Lemon Honey Tea': '🍋',
-    'Samosa': '🥟',
-    'Bread Omelette': '🍳',
-    'Maggi': '🍜',
-    'Veg Puff': '🥐',
-    'Paneer Sandwich': '🥪',
-    'Veg Thali': '🍱',
-    'Rajma Chawal': '🍚',
-    'Chole Bhature': '🫓',
-    'Egg Rice': '🍳',
-    'Lassi': '🥛',
-    'Nimbu Pani': '🍋',
-    'Mango Shake': '🥭',
+  const getFoodIcon = (name: string, isVeg: boolean) => {
+    const n = name.toLowerCase()
+    if (n.includes('chai') || n.includes('tea') || n.includes('coffee')) return <Coffee className="w-12 h-12 text-[#853426]/40" />
+    if (n.includes('shake') || n.includes('lassi') || n.includes('pani') || n.includes('drink')) return <CupSoda className="w-12 h-12 text-[#853426]/40" />
+    if (n.includes('samosa') || n.includes('puff') || n.includes('croissant')) return <Croissant className="w-12 h-12 text-[#853426]/40" />
+    if (n.includes('egg') || n.includes('omelette')) return <Egg className="w-12 h-12 text-[#853426]/40" />
+    if (n.includes('maggi') || n.includes('noodles') || n.includes('soup')) return <Soup className="w-12 h-12 text-[#853426]/40" />
+    if (n.includes('sandwich') || n.includes('pizza') || n.includes('burger')) return <Pizza className="w-12 h-12 text-[#853426]/40" />
+    if (n.includes('thali') || n.includes('chawal') || n.includes('rice') || n.includes('bhature')) return <UtensilsCrossed className="w-12 h-12 text-[#853426]/40" />
+    
+    return isVeg ? <Utensils className="w-12 h-12 text-[#853426]/40" /> : <Egg className="w-12 h-12 text-[#853426]/40" />
   }
 
   return (
@@ -401,8 +397,8 @@ function MenuItemCard({ item, quantity, onAdd, onIncrement, onDecrement }: {
         {item.imageUrl ? (
           <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
         ) : (
-          <span className="transition-transform duration-300 group-hover:scale-110">
-            {foodEmoji[item.name] || (item.isVeg ? '🥗' : '🍳')}
+          <span className="transition-transform duration-300 group-hover:scale-110 flex items-center justify-center">
+            {getFoodIcon(item.name, item.isVeg)}
           </span>
         )}
 

@@ -5,6 +5,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import { useAuth } from '@/context/AuthContext'
 import { useCart } from '@/context/CartContext'
 import api from '@/lib/api'
+import { Coffee, ClipboardList, Bell, ShoppingCart, LogOut, Menu, X, User as UserIcon } from 'lucide-react'
 
 export default function Navbar() {
   const { user, logout } = useAuth()
@@ -35,50 +36,50 @@ export default function Navbar() {
   }, [user])
 
   const navLinks = [
-    { label: 'Menu', path: '/menu', icon: '🍵' },
-    { label: 'Orders', path: '/orders', icon: '📋' },
-    { label: 'Notifications', path: '/notifications', icon: '🔔', badge: unreadNotifications },
-    { label: 'Cart', path: '/cart', icon: '🛒', badge: itemCount }
+    { label: 'Menu', path: '/menu', icon: <Coffee className="w-4 h-4" /> },
+    { label: 'Orders', path: '/orders', icon: <ClipboardList className="w-4 h-4" /> },
+    { label: 'Notifications', path: '/notifications', icon: <Bell className="w-4 h-4" />, badge: unreadNotifications },
+    { label: 'Cart', path: '/cart', icon: <ShoppingCart className="w-4 h-4" />, badge: itemCount }
   ]
 
   const isAdmin = user?.role === 'ADMIN' || user?.role === 'STAFF'
 
   return (
-    <header className="bg-white border-b border-stone-100 sticky top-0 z-40 shadow-sm backdrop-blur-md bg-white/90">
-      <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+    <header className="bg-white/90 border-b border-stone-100 sticky top-0 z-40 shadow-sm backdrop-blur-md">
+      <div className="w-full px-4 md:px-8 py-3 flex items-center justify-between">
         
         {/* Brand Logo */}
         <div 
           onClick={() => router.push(isAdmin ? '/admin/orders' : '/menu')}
-          className="flex items-center gap-2 cursor-pointer select-none"
+          className="flex items-center gap-2.5 cursor-pointer select-none group"
         >
-          <div className="w-9 h-9 bg-amber-800 rounded-xl flex items-center justify-center text-xl shadow-md shadow-amber-900/10">
-            <span>🍵</span>
+          <div className="w-10 h-10 bg-gradient-to-tr from-amber-700 to-amber-900 rounded-xl flex items-center justify-center text-white shadow-lg shadow-amber-900/20 transition-transform group-hover:scale-105">
+            <Coffee className="w-5 h-5" />
           </div>
-          <span className="text-xl font-bold tracking-tight text-amber-950 bg-gradient-to-r from-amber-900 to-amber-800 bg-clip-text text-transparent">
+          <span className="text-xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-amber-950 to-amber-700">
             Chai Adda
           </span>
         </div>
 
         {/* Desktop Navigation Links */}
         {!isAdmin && (
-          <nav className="hidden md:flex items-center gap-1">
+          <nav className="hidden md:flex items-center gap-1.5 bg-stone-50/50 p-1 rounded-2xl border border-stone-100/50">
             {navLinks.map((link) => {
               const isActive = pathname === link.path
               return (
                 <button
                   key={link.path}
                   onClick={() => router.push(link.path)}
-                  className={`relative px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 flex items-center gap-1.5 ${
+                  className={`relative px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 flex items-center gap-2 ${
                     isActive
-                      ? 'bg-amber-50 text-amber-900 font-semibold'
-                      : 'text-stone-500 hover:text-stone-800 hover:bg-stone-50'
+                      ? 'bg-white text-amber-900 shadow-sm shadow-stone-200/50 ring-1 ring-stone-200'
+                      : 'text-stone-500 hover:text-stone-900 hover:bg-white/50'
                   }`}
                 >
-                  <span>{link.icon}</span>
+                  <span className={`${isActive ? 'text-amber-600' : 'text-stone-400'}`}>{link.icon}</span>
                   <span>{link.label}</span>
                   {(link.badge ?? 0) > 0 && (
-                    <span className="absolute -top-1 -right-1 min-w-5 h-5 bg-rose-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1 border border-white animate-pulse">
+                    <span className="absolute -top-1.5 -right-1.5 min-w-[20px] h-5 bg-rose-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1.5 border-2 border-white shadow-sm shadow-rose-500/30 animate-pulse">
                       {link.badge}
                     </span>
                   )}
@@ -94,11 +95,11 @@ export default function Navbar() {
           {!isAdmin && (
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="md:hidden relative p-2 hover:bg-stone-50 rounded-xl text-stone-600 transition"
+              className="md:hidden relative p-2.5 hover:bg-stone-100 rounded-xl text-stone-600 transition-colors"
             >
-              <span className="text-xl">{isMobileMenuOpen ? '✕' : '☰'}</span>
+              {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
               {(unreadNotifications > 0 || itemCount > 0) && !isMobileMenuOpen && (
-                <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-rose-500 rounded-full border border-white" />
+                <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-rose-500 rounded-full border-2 border-white" />
               )}
             </button>
           )}
@@ -107,9 +108,9 @@ export default function Navbar() {
           <div className="relative">
             <button
               onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
-              className="w-9 h-9 bg-gradient-to-br from-amber-700 to-amber-900 rounded-xl flex items-center justify-center text-white font-semibold text-sm shadow-md transition transform hover:scale-105"
+              className="w-10 h-10 bg-gradient-to-br from-stone-800 to-stone-950 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-stone-900/10 transition-all hover:scale-105 hover:shadow-xl hover:shadow-stone-900/20 border-2 border-white ring-2 ring-transparent hover:ring-stone-100"
             >
-              {user?.name?.charAt(0).toUpperCase() || 'U'}
+              {user?.name?.charAt(0).toUpperCase() || <UserIcon className="w-4 h-4" />}
             </button>
 
             {isProfileDropdownOpen && (
@@ -118,21 +119,36 @@ export default function Navbar() {
                   onClick={() => setIsProfileDropdownOpen(false)}
                   className="fixed inset-0 z-10"
                 />
-                <div className="absolute right-0 mt-2 w-48 bg-white border border-stone-100 rounded-2xl shadow-xl z-20 py-2 animate-in fade-in slide-in-from-top-2 duration-150">
-                  <div className="px-4 py-2 border-b border-stone-50">
-                    <p className="text-xs font-semibold text-stone-400 uppercase tracking-wider">Signed in as</p>
-                    <p className="text-sm font-bold text-stone-800 truncate">{user?.name || 'User'}</p>
-                    <p className="text-xs text-stone-500 truncate">{user?.email}</p>
+                <div className="absolute right-0 mt-3 w-64 bg-white/80 backdrop-blur-xl border border-stone-100/50 rounded-2xl shadow-2xl shadow-stone-900/10 z-20 overflow-hidden animate-in fade-in slide-in-from-top-4 duration-200">
+                  <div className="px-5 py-4 bg-gradient-to-br from-stone-50 to-white border-b border-stone-100/50">
+                    <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-1">Signed in as</p>
+                    <p className="text-base font-black tracking-tight text-stone-900 truncate">{user?.name || 'User'}</p>
+                    <p className="text-xs font-medium text-stone-500 truncate mt-0.5">{user?.email}</p>
                   </div>
-                  <button
-                    onClick={() => {
-                      setIsProfileDropdownOpen(false)
-                      logout()
-                    }}
-                    className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 font-medium transition"
-                  >
-                    <span>🚪</span> Sign Out
-                  </button>
+                  
+                  <div className="p-2 flex flex-col gap-1">
+                    <button
+                      onClick={() => {
+                        setIsProfileDropdownOpen(false)
+                        router.push('/profile')
+                      }}
+                      className="w-full text-left px-3 py-2.5 text-sm text-stone-700 hover:text-stone-900 hover:bg-stone-50 rounded-xl flex items-center gap-3 font-semibold transition-colors"
+                    >
+                      <UserIcon className="w-4 h-4" /> 
+                      My Profile
+                    </button>
+                    
+                    <button
+                      onClick={() => {
+                        setIsProfileDropdownOpen(false)
+                        logout()
+                      }}
+                      className="w-full text-left px-3 py-2.5 text-sm text-rose-600 hover:text-rose-700 hover:bg-rose-50 rounded-xl flex items-center gap-3 font-semibold transition-colors"
+                    >
+                      <LogOut className="w-4 h-4" /> 
+                      Sign Out
+                    </button>
+                  </div>
                 </div>
               </>
             )}
@@ -142,8 +158,8 @@ export default function Navbar() {
 
       {/* Mobile Drawer Navigation Links */}
       {isMobileMenuOpen && !isAdmin && (
-        <div className="md:hidden border-t border-stone-100 bg-white py-2 px-4 shadow-inner animate-in slide-in-from-top duration-150">
-          <nav className="flex flex-col gap-1">
+        <div className="md:hidden border-t border-stone-100 bg-white/95 backdrop-blur-md py-3 px-4 shadow-inner animate-in slide-in-from-top duration-200">
+          <nav className="flex flex-col gap-1.5">
             {navLinks.map((link) => {
               const isActive = pathname === link.path
               return (
@@ -153,18 +169,18 @@ export default function Navbar() {
                     setIsMobileMenuOpen(false)
                     router.push(link.path)
                   }}
-                  className={`w-full px-4 py-2.5 rounded-xl text-sm font-medium transition flex items-center justify-between ${
+                  className={`w-full px-4 py-3 rounded-xl text-sm font-semibold transition-all flex items-center justify-between ${
                     isActive
-                      ? 'bg-amber-50 text-amber-900 font-semibold'
-                      : 'text-stone-500 hover:bg-stone-50'
+                      ? 'bg-stone-900 text-white shadow-md shadow-stone-900/10'
+                      : 'text-stone-600 hover:bg-stone-50'
                   }`}
                 >
-                  <div className="flex items-center gap-2">
-                    <span>{link.icon}</span>
+                  <div className="flex items-center gap-3">
+                    <span className={`${isActive ? 'text-amber-500' : 'text-stone-400'}`}>{link.icon}</span>
                     <span>{link.label}</span>
                   </div>
                   {(link.badge ?? 0) > 0 && (
-                    <span className="min-w-5 h-5 bg-rose-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1">
+                    <span className="min-w-[24px] h-6 bg-rose-500 text-white text-[11px] font-bold rounded-full flex items-center justify-center px-2 shadow-sm shadow-rose-500/20">
                       {link.badge}
                     </span>
                   )}

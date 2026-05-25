@@ -73,9 +73,9 @@ export const createPayment = async (req: Request, res: Response) => {
       currency: razorpayOrder.currency,
       keyId: process.env.RAZORPAY_KEY_ID
     })
-  } catch (error) {
+  } catch (error: any) {
     console.log('CREATE PAYMENT ERROR:', error)
-    return res.status(500).json({ error: 'Something went wrong' })
+    return res.status(500).json({ error: error.message || 'Something went wrong in createPayment' })
   }
 }
 
